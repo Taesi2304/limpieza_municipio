@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user) {
             $_SESSION['usuario'] = $user['nombre_usuario'];
+            $_SESSION['id_usuario'] = (int) $user['id_usuario'];
             $_SESSION['rol'] = $user['rol'];
             header('Location: captura.php');
             exit;
@@ -48,17 +49,17 @@ if (isset($_GET['logout'])) {
     <div class="container">
         <div class="row justify-content-center mt-5">
             <div class="col-md-5">
-                <div class="card shadow">
-                    <div class="card-header card-header-success text-center">
-                        <h3>Limpieza Publica Municipal </h3>
-                        <p class="mb-0">Ingresa los datos de inicio de sesión: </p>
-                    </div>
+                <div class="card shadow card-form-panel">
                     <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h3 class="h5 mb-2 fw-semibold text-dark">Limpieza Pública Municipal</h3>
+                            <p class="text-muted small mb-0">Ingresa los datos de inicio de sesión</p>
+                        </div>
                         <?php if ($error): ?>
                             <div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
                         <?php endif; ?>
 
-                        <form method="POST">
+                        <form method="POST" class="text-start">
                             <div class="mb-3">
                                 <label for="usuario" class="form-label">Usuario</label>
                                 <input type="text" id="usuario" name="usuario" class="form-control" required autofocus>
@@ -95,7 +96,8 @@ if (isset($_GET['logout'])) {
              <br> Jessica Gallegos Rodriguez
              <br> Stephany Chavez
              <br> Jan Karlo Armendariz 
-             <br> Joel Garcia</p>
+             <br> Joel Garcia
+             <br> Brandon Velazquez</p>
         </div>
     </div>
 </footer>

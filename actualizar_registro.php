@@ -1,94 +1,115 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario'])) {
+if (!isset($_SESSION['usuario']) || empty($_SESSION['id_usuario'])) {
     die('No autenticado');
 }
 
 require_once 'includes/db.php';
+require_once 'includes/registro_helpers.php';
 $pdo = getConnection();
 
 try {
     $pdo->beginTransaction();
 
-    $folio         = intval($_POST['folio']);
-    $km_salida     = floatval($_POST['km_salida']     ?? 0);
-    $km_entrada    = floatval($_POST['km_entrada']    ?? 0);
-    $diesel_inicio = floatval($_POST['diesel_inicio'] ?? 0);
-    $diesel_final  = floatval($_POST['diesel_final']  ?? 0);
-    $diesel_cargado= floatval($_POST['diesel_cargado']?? 0);
-    $total_km      = max(0, $km_entrada - $km_salida);
-    $total_diesel  = max(0, ($diesel_inicio - $diesel_final) + $diesel_cargado);
-    
-    // ACTUALIZAR REGISTRO PRINCIPAL
-    $stmt = $pdo->prepare("
-        UPDATE registro_diario SET
-            fecha_orden = ?,
-            turno = ?,
-            id_ruta = ?,
-            id_despachador = ?,
-            id_chofer = ?,
-            id_tipo_unidad = ?,
-            id_unidad = ?,
-            cantidad_kg = ?,
-            cantidad_puches = ?,
-            km_salida = ?,
-            km_entrada = ?,
-            total_km = ?,
-            diesel_inicio = ?,
-            diesel_final = ?,
-            diesel_cargado = ?,
-            total_diesel = ?
-        WHERE folio = ?
-    ");
-    
-    $stmt->execute([
-        $_POST['fecha_orden'],
-        intval($_POST['turno']),
-        intval($_POST['id_ruta']),
-        intval($_POST['id_despachador']),
-        intval($_POST['id_chofer']),
-        intval($_POST['id_tipo_unidad']),
-        intval($_POST['id_unidad']),
-        floatval($_POST['cantidad_kg']),
-        intval($_POST['cantidad_puches']),
-        $km_salida,
-        $km_entrada,
-        $total_km,
-        $diesel_inicio,
-        $diesel_final,
-        $diesel_cargado,
-        $total_diesel,
-        $folio
-    ]);
-
-    // ACTUALIZAR COLONIAS: Borrar anteriores y reinsertar
-    $stmtDel = $pdo->prepare("DELETE FROM registro_detalle_colonias WHERE folio = ?");
-    $stmtDel->execute([$folio]);
-    
-    if (isset($_POST['pct_colonia']) && is_array($_POST['pct_colonia'])) {
-        $stmtCol = $pdo->prepare("INSERT INTO registro_detalle_colonias (folio, id_colonia, porcentaje_recolectado) VALUES (?, ?, ?)");
-        foreach ($_POST['pct_colonia'] as $idCol => $pct) {
-            $pct = floatval($pct);
-            if ($pct > 0) {
-                $stmtCol->execute([$_POST['folio'], $idCol, $pct]);
-            }
-        }
+    $id_folio = (int) ($_POST['id_folio'] ?? 0);
+    if ($id_folio < 1) {
+        throw new Exception('Folio inválido');
     }
-    
+
+    $numero_ruta = (int) ($_POST['numero_ruta'] ?? 0);
+    $pctPost = isset($_POST['pct_colonia']) && is_array($_POST['pct_colonia']) ? $_POST['pct_colonia'] : [];
+    $slots = construir_slots_colonias($pdo, $numero_ruta, $pctPost);
+
+    $km_inicio = (float) ($_POST['km_inicio'] ?? 0);
+    $km_final = (float) ($_POST['km_final'] ?? 0);
+    if ($km_final >= $km_inicio) {
+        throw new Exception('Los km al final deben ser menores que los km al inicio (odómetro al terminar la ruta).');
+    }
+    $total_km = max(0, $km_inicio - $km_final);
+
+    $comentarios = trim((string) ($_POST['comentarios'] ?? ''));
+    $comentarios = $comentarios === '' ? null : $comentarios;
+
+    $sets = [
+        'fecha_orden = ?',
+        'turno = ?',
+        'id_tipo_unidad = ?',
+        'id_unidad = ?',
+        'numero_ruta = ?',
+        'id_chofer = ?',
+        'cantidad = ?',
+        'comentarios = ?',
+        'num_puches = ?',
+        'km_inicio = ?',
+        'km_final = ?',
+        'total_km = ?',
+        'diesel_inicio = ?',
+        'diesel_final = ?',
+        'diesel_cargado = ?',
+        'id_despachador = ?',
+    ];
+    for ($i = 1; $i <= 11; $i++) {
+        $sets[] = 'colonia_' . $i . ' = ?';
+    }
+    for ($i = 1; $i <= 11; $i++) {
+        $sets[] = 'pct_colonia_' . $i . ' = ?';
+    }
+    $sets[] = 'num_colonias_ruta = ?';
+    $sets[] = 'suma_pct_atendida = ?';
+    $sets[] = 'pct_efectividad = ?';
+    for ($i = 1; $i <= 11; $i++) {
+        $sets[] = 'habitantes_' . $i . ' = ?';
+    }
+
+    $params = [
+        $_POST['fecha_orden'] ?? null,
+        (int) ($_POST['turno'] ?? 0),
+        (int) ($_POST['id_tipo_unidad'] ?? 0),
+        (int) ($_POST['id_unidad'] ?? 0),
+        $numero_ruta,
+        (int) ($_POST['id_chofer'] ?? 0),
+        (float) ($_POST['cantidad'] ?? 0),
+        $comentarios,
+        (int) ($_POST['num_puches'] ?? 0),
+        $km_inicio,
+        $km_final,
+        $total_km,
+        (float) ($_POST['diesel_inicio'] ?? 0),
+        (float) ($_POST['diesel_final'] ?? 0),
+        (float) ($_POST['diesel_cargado'] ?? 0),
+        (int) ($_POST['id_despachador'] ?? 0),
+    ];
+
+    for ($i = 1; $i <= 11; $i++) {
+        $params[] = $slots['colonia'][$i];
+    }
+    for ($i = 1; $i <= 11; $i++) {
+        $params[] = $slots['pct'][$i];
+    }
+    $params[] = $slots['n'];
+    $params[] = $slots['suma'];
+    $params[] = $slots['pct_efectividad'];
+    for ($i = 1; $i <= 11; $i++) {
+        $params[] = $slots['hab'][$i];
+    }
+
+    $params[] = $id_folio;
+
+    $sql = 'UPDATE registro_diario SET ' . implode(', ', $sets) . ' WHERE id_folio = ?';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
     $pdo->commit();
-    
+
     echo "<script>
-        alert('Orden Actualizada \\nFolio: {$folio}');
-        window.location='editar.php?folio={$folio}';
+        alert('Orden actualizada \\nFolio: {$id_folio}');
+        window.location='editar.php?folio={$id_folio}';
     </script>";
-    
 } catch (Exception $e) {
     $pdo->rollBack();
+    $msg = htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8');
     echo "<script>
-        alert('Error: {$e->getMessage()}');
+        alert('Error: {$msg}');
         window.history.back();
     </script>";
 }
-?>
-</body>
-</html>

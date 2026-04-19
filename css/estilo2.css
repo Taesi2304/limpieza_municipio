@@ -3,17 +3,13 @@
 :root {
   --guindo:          #4D0C1F;
   --guindo-claro:    #7a1232;
-  --dorado:          #BB8F5B;
-  --dorado-claro:    #E4D2B5;
-  --dorado-acento:   #FFBC7D;
   --gris-oscuro:     #2c3e50;
   --gris-medio:      #54595F;
   --gris-claro:      #f4f1ec;
   --blanco:          #ffffff;
-  --rojo-error:      #c0392b;
   --sombra-card:     0 4px 24px rgba(77,12,31,.13);
   --radio:           8px;
-  --transicion:      all .22s ease;
+  --transicion:      none;
 }
 
 
@@ -22,49 +18,38 @@ html {
 }
 
 body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'Barlow', sans-serif;
+  background: #ffffff;
+  color: #212529;
 }
 
 main {
-    flex: 1;
+  flex: 1;
 }
 
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  font-family: 'Barlow', sans-serif;
-  /* background: linear-gradient(135deg, #2a0610 0%, #4D0C1F 45%, #3b0a18 100%); */
-  background:linear-gradient(120deg,#2a0610 30%,
-    #4D0C1F 40%,
-    #3b0a18 70%); /*/degradado de fondo entre 3 colores*/
-  color: var(--gris-oscuro);
+/* ── Navbar  ── */
+nav.app-navbar,
+nav.navbar-light.app-navbar {
+  background: #ffffff !important;
+  border-bottom: 1px solid #e9ecef !important;
+  box-shadow: none !important;
+  padding: 14px 24px;
 }
-
-/* ── Navbar ── */
-nav.navbar.bg-success {
-   background: linear-gradient(135deg, var(--guindo), var(--guindo-claro)) !important; 
-  /* background: #91516452 !important; */
-  backdrop-filter: blur(10px);
-  border-bottom: 2px solid var(--dorado);
-  padding: 24px
-}
-nav.navbar .container-fluid {
+nav.app-navbar .container-fluid {
   position: relative;
-  justify-content: flex-end !important;
+  justify-content: space-between !important;
 }
-nav.navbar .navbar-brand {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  letter-spacing: .4px;
-  text-transform: uppercase;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
+nav.app-navbar .navbar-brand {
+  font-family: 'Barlow', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  position: static;
+  transform: none;
   margin: 0;
 }
 
@@ -75,67 +60,61 @@ nav.navbar .navbar-brand {
 }
 
 /* ── Card principal ── */
-.card.shadow {
+.card.shadow,
+.card-form-panel {
   border: none;
-  border-radius: 14px;
-  box-shadow: var(--sombra-card) !important;
-  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1) !important;
+  overflow: visible;
+  background: #fff;
 }
 .card-body {
   padding: 28px 32px;
-  background-color: var(--blanco);
-}
-
-/* ── Encabezado de card ── */
-.card-header-success {
-  background:#7a1231;
-  color: var(--blanco);
-  padding: 16px 24px;
-  border-bottom: 3px solid var(--dorado);
-}
-.card-header-success h4 {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  margin: 0;
+  background-color: #ffffff;
 }
 
 /* ── Títulos de sección ── */
 .section-title {
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: .95rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--guindo);
-  border-left: 4px solid var(--dorado); /*/*borde lateral dorado*/
-  padding-left: 10px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #212529;
+  border: none !important;
+  border-left: none !important;
+  padding-left: 0 !important;
   margin: 22px 0 14px;
+  background: none !important;
+  box-shadow: none !important;
+}
+.section-title::before,
+.section-title::after {
+  content: none !important;
+  display: none !important;
 }
 
-/* ── Folio badge ── */
+/* ── Folio ── */
 .folio-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: var(--guindo);
-  color: var(--blanco);
-  padding: 8px 20px;
-  border-radius: 50px;
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  box-shadow: 0 3px 10px rgba(134, 90, 103, 0.35);
+  background: #ffffff;
+  color: #212529;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  border: 1px solid #dee2e6;
+  box-shadow: none;
 }
 
 /* ── Asterisco en campos obligatorios ── */
 div:has(> input[required]) .form-label::after,
 div:has(> select[required]) .form-label::after {
   content: ' *';
-  color: var(--rojo-error);
   font-weight: 700;
 }
 
@@ -146,25 +125,29 @@ div:has(> select[required]) .form-label::after {
   font-size: .80rem;
   text-transform: uppercase;
   letter-spacing: .5px;
-  color: var(--gris-medio);
   margin-bottom: 5px;
 }
 
 /* ── Inputs y selects ── */
 .form-control,
 .form-select {
-  border: 1.5px solid #d9cfc3;
-  border-radius: var(--radio);
-  font-size: .93rem;
-  transition: var(--transicion);
-  background-color: #fdfaf7;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.93rem;
+  transition: none;
+  background-color: #ffffff;
   font-family: 'Barlow', sans-serif;
+}
+.form-control:hover,
+.form-select:hover {
+  border-color: #ced4da;
+  background-color: #ffffff;
 }
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--dorado);
-  box-shadow: 0 0 0 3px rgba(187,143,91,.20);
-  background-color: var(--blanco);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  background-color: #ffffff;
+  outline: none;
 }
 .form-control.is-invalid,
 .form-select.is-invalid {
@@ -173,31 +156,33 @@ div:has(> select[required]) .form-label::after {
 
 /* Campos calculados (readonly) */
 .readonly-field {
-  background: var(--gris-claro) !important;
-  color: var(--gris-medio);
+  background: #ffffff !important;
+  color: #6c757d;
   cursor: not-allowed;
+  border-style: dashed;
 }
 
-/* ── Tablas – encabezado Tabla 1 ── */
+/* ── Tablas – encabezados neutros (sin guindo ni dorado) ── */
 thead.table-success tr th {
-  background-color: var(--guindo) !important;
-  color: var(--blanco) !important;
-  font-family: 'Readex Pro', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  font-size: .78rem;
-  border-color: var(--guindo-claro) !important;
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+  font-family: 'Barlow', sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-color: #dee2e6 !important;
 }
 
-/* ── Tablas – encabezado Tabla 2 ── */
 thead.table-primary tr th {
-  background-color: var(--dorado) !important;
-  color: var(--guindo) !important;
-  font-family: 'Readex Pro', sans-serif;
-  text-transform: uppercase;
-  letter-spacing: .8px;
-  font-size: .78rem;
-  border-color: var(--dorado-claro) !important;
+  background-color: #f8f9fa !important;
+  color: #212529 !important;
+  font-family: 'Barlow', sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-color: #dee2e6 !important;
 }
 
 /* Input % dentro de la tabla de colonias */
@@ -205,11 +190,11 @@ thead.table-primary tr th {
   width: 90px;
   text-align: center;
   font-weight: 600;
-  color: var(--guindo);
+  color: #212529;
   font-family: 'Barlow', sans-serif;
 }
 .pct-input:focus {
-  color: var(--gris-oscuro);
+  color: #212529;
 }
 
 /* Celdas de resultados en Tabla 2 */
@@ -222,44 +207,58 @@ thead.table-primary tr th {
 }
 #tabla2_efectividad {
   font-weight: 700;
-  color: var(--guindo);
+  color: #212529;
 }
 
-/* ── Botón guardar ── */
-#btn_guardar {
-  background: linear-gradient(135deg, var(--guindo), var(--guindo-claro));
-  color: var(--blanco);
-  border: none;
-  border-radius: 50px;
-  padding: 13px 48px;
-  font-family: 'Bricolage Grotesque', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  transition: var(--transicion);
-  box-shadow: 0 4px 14px rgba(77,12,31,.40);
+/* ── Botón guardar / primario ── */
+#btn_guardar,
+.btn-success-custom {
+  background: #198754;
+  color: #ffffff;
+  border: 1px solid #198754;
+  border-radius: 8px;
+  padding: 12px 24px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: none;
+  box-shadow: none;
   width: 100%;
 }
-#btn_guardar:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(77,12,31,.55);
-  background: linear-gradient(135deg, var(--dorado), var(--guindo));
-  color: var(--blanco);
+#btn_guardar:hover:not(:disabled),
+.btn-success-custom:hover:not(:disabled) {
+  background: #198754;
+  color: #ffffff;
+  border-color: #198754;
+  transform: none;
+  box-shadow: none;
+  filter: none;
 }
 #btn_guardar:disabled {
-  background: #b0bec5 !important;
-  box-shadow: none;
+  background: #adb5bd !important;
+  border-color: #adb5bd !important;
   cursor: not-allowed;
-  opacity: .7;
-  transform: none;
+  opacity: 0.85;
+}
+
+#btn_guardar:focus,
+#btn_guardar:active,
+.btn-success-custom:focus,
+.btn-success-custom:active {
+  background: #198754 !important;
+  color: #ffffff !important;
+  border-color: #198754 !important;
+  box-shadow: none !important;
 }
 
 /* ── Footer ── */
 footer.footer {
-    position: relative; /* Asegura que el footer se posicione al final del contenido */
-    background-color: var(--dorado);
-    color: var(--blanco);
+    position: relative;
+    background-color: #f8f9fa;
+    color: #495057;
+    border-top: 1px solid #e9ecef;
     /* padding: 10px 0;
     width: 100%; */
     text-align: center;
@@ -281,18 +280,11 @@ footer.footer .footer-columns {
 @media (max-width: 768px) {
   .card-body { padding: 18px 14px; }
   .folio-badge { font-size: 1rem; padding: 6px 14px; }
-  nav.navbar .navbar-brand {
-    position: static;
-    transform: none;
-    display: block;
-    text-align: center;
-    width: 100%;
-    order: -1;
-    font-size: 1.05rem;
+  nav.app-navbar .navbar-brand {
+    font-size: 1rem;
   }
 }
 @media (max-width: 576px) {
-  .card-header-success h4 { font-size: 1.1rem; }
   #btn_guardar { padding: 12px 24px; font-size: 1rem; }
 }
 

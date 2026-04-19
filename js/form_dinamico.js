@@ -8,13 +8,15 @@ document.addEventListener('DOMContentLoaded', function() {
         '[name="fecha_orden"]',
         '#fecha_captura',
         '[name="turno"]',
-        '#id_ruta',
+        '#numero_ruta',
         '[name="id_despachador"]',
         '[name="id_chofer"]',
         '#id_tipo_unidad',
         '#id_unidad',
-        '[name="cantidad_kg"]',
-        '[name="cantidad_puches"]',
+        '[name="cantidad"]',
+        '[name="num_puches"]',
+        '#km_inicio',
+        '#km_final',
         '#diesel_inicio',
         '#diesel_final',
     ];
@@ -31,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('formulario')?.addEventListener('input', validarFormulario);
     document.getElementById('formulario')?.addEventListener('change', validarFormulario);
 
-    const selectRuta = document.getElementById('id_ruta');
+    const selectRuta = document.getElementById('numero_ruta');
     const tablaColoniasWrapper = document.getElementById('tabla_colonias_wrapper');
     const tbodyColonias = document.getElementById('tbody_colonias');
     
@@ -70,15 +72,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td class="text-center">
                     <input type="number"
                            class="form-control form-control-sm pct-input"
-                           name="pct_colonia[${colonia.id_colonia}]"
-                           data-id-colonia="${colonia.id_colonia}"
+                           name="pct_colonia[${colonia.slot}]"
+                           data-slot="${colonia.slot}"
                            min="0"
                            max="100"
                            step="0.1"
                            value="0"
                            placeholder="0-100">
                 </td>
-                <td class="text-center">${parseInt(colonia.habitantes).toLocaleString()}</td>
+                <td class="text-center">${Number(colonia.habitantes).toLocaleString('es-MX')}</td>
             `;
             tbodyColonias.appendChild(tr);
         });

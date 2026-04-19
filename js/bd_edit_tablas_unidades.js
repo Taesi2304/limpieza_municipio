@@ -20,7 +20,7 @@ document.getElementById('id_tipo_unidad_edit')?.addEventListener('change', funct
             unidades.forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.id_unidad;
-                option.textContent = u.numero_unidad;
+                option.textContent = u.numero_unidad || u.numero;
                 selectUnidad.appendChild(option);
             });
             selectUnidad.disabled = false;

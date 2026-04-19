@@ -8,34 +8,36 @@ require_once 'includes/db.php';
 $pdo = getConnection();
 
 $registro = null;
-$colonias = [];
+$colonias_edit = [];
 $error = '';
 
-// Buscar registro por folio
 if (isset($_GET['folio'])) {
-    $folio = $_GET['folio'];
+    $folio = (int) $_GET['folio'];
 
-    // Obtener registro principal
-    $stmt = $pdo->prepare("SELECT * FROM registro_diario WHERE folio = ?");
+    $stmt = $pdo->prepare('
+        SELECT r.*, u.nombre_usuario AS capturador_nombre
+        FROM registro_diario r
+        INNER JOIN usuarios u ON r.id_usuario = u.id_usuario
+        WHERE r.id_folio = ?
+    ');
     $stmt->execute([$folio]);
-    $registro = $stmt->fetch();
+    $registro = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($registro) {
-        // Obtener colonias de la ruta
-        $stmtCol = $pdo->prepare("SELECT * FROM colonias WHERE id_ruta = ? ORDER BY id_colonia");
-        $stmtCol->execute([$registro['id_ruta']]);
-        $colonias = $stmtCol->fetchAll();
-
-        // Obtener porcentajes guardados: [id_colonia => porcentaje_recolectado]
-        $stmtDet = $pdo->prepare("SELECT id_colonia, porcentaje_recolectado FROM registro_detalle_colonias WHERE folio = ?");
-        $stmtDet->execute([$folio]);
-        $detalle = $stmtDet->fetchAll(PDO::FETCH_KEY_PAIR);
-
-        foreach ($colonias as &$col) {
-            $col['porcentaje'] = $detalle[$col['id_colonia']] ?? 0;
+        for ($i = 1; $i <= 11; $i++) {
+            $cn = $registro['colonia_' . $i] ?? null;
+            if ($cn === null || $cn === '') {
+                continue;
+            }
+            $colonias_edit[] = [
+                'slot' => $i,
+                'nombre_colonia' => $cn,
+                'habitantes' => $registro['habitantes_' . $i],
+                'porcentaje' => $registro['pct_colonia_' . $i],
+            ];
         }
     } else {
-        $error = "No se encontró el folio: $folio";
+        $error = 'No se encontró el folio: ' . $folio;
     }
 }
 ?>
@@ -53,22 +55,19 @@ if (isset($_GET['folio'])) {
 </head>
 
 <body>
-    <nav class="navbar navbar-dark bg-success mb-4">
+    <nav class="navbar navbar-light bg-white border-bottom mb-4 app-navbar">
         <div class="container-fluid">
-            <span class="navbar-brand">Editar Orden de Servicio</span>
-            <div>
-                <span class="text-white me-3"><i class="bi bi-person-circle"></i> <?php echo $_SESSION['usuario']; ?></span>
-                <a href="captura.php" class="btn btn-light btn-sm me-2"><i class="bi bi-file-earmark-plus"></i> Nueva</a>
-                <a href="inicio.php?logout=1" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
+            <span class="navbar-brand text-dark mb-0">Editar Orden de Servicio</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small me-1"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['usuario']); ?></span>
+                <a href="captura.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-plus"></i> Nueva</a>
+                <a href="inicio.php?logout=1" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <div class="card shadow">
-            <div class="card-header card-header-success">
-                <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Buscar y Editar Orden</h4>
-            </div>
+        <div class="card shadow card-form-panel">
             <div class="card-body">
 
                 <!-- Buscador -->
@@ -92,12 +91,12 @@ if (isset($_GET['folio'])) {
                     <hr>
 
                     <form action="actualizar_registro.php" method="POST">
-                        <input type="hidden" name="folio" value="<?php echo $registro['folio']; ?>">
+                        <input type="hidden" name="id_folio" value="<?php echo (int) $registro['id_folio']; ?>">
 
-                        <h5 class="section-title"> Folio: <?php echo $registro['folio']; ?></h5>
+                        <h5 class="section-title"> Folio: <?php echo (int) $registro['id_folio']; ?></h5>
                         <div class="col-md-3">
                             <label class="form-label"><i class="bi bi-person"></i> Capturado por:</label>
-                            <input type="text" class="form-control readonly-field" value="<?php echo $registro['usuario_captura']; ?>" readonly>
+                            <input type="text" class="form-control readonly-field" value="<?php echo htmlspecialchars($registro['capturador_nombre']); ?>" readonly>
                         </div>
 
                         <div class="row mb-4">
@@ -132,12 +131,13 @@ if (isset($_GET['folio'])) {
                         <div class="row mb-4">
                             <div class="col-md-4">
                                 <label class="form-label"><i class="bi bi-signpost-2"></i> Ruta</label>
-                                <select name="id_ruta" id="id_ruta_edit" class="form-select" required>
+                                <select name="numero_ruta" id="id_ruta_edit" class="form-select" required>
                                     <?php
-                                    $rutas = $pdo->query("SELECT * FROM rutas ORDER BY id_ruta")->fetchAll();
-                                    foreach ($rutas as $r) {
-                                        $sel = ($r['id_ruta'] == $registro['id_ruta']) ? 'selected' : '';
-                                        echo "<option value='{$r['id_ruta']}' $sel>{$r['nombre_ruta']}</option>";
+                                    $nums = $pdo->query('SELECT DISTINCT id_ruta FROM rutas ORDER BY id_ruta')->fetchAll(PDO::FETCH_COLUMN);
+                                    foreach ($nums as $nr) {
+                                        $nr = (int) $nr;
+                                        $sel = ((int) $registro['numero_ruta'] === $nr) ? 'selected' : '';
+                                        echo "<option value='{$nr}' {$sel}>Ruta {$nr}</option>";
                                     }
                                     ?>
                                 </select>
@@ -146,10 +146,10 @@ if (isset($_GET['folio'])) {
                                 <label class="form-label"><i class="bi bi-person-badge"></i> Despachador</label>
                                 <select name="id_despachador" class="form-select" required>
                                     <?php
-                                    $desp = $pdo->query("SELECT * FROM personal WHERE puesto='Despachador' ORDER BY nombre_completo")->fetchAll();
+                                    $desp = $pdo->query('SELECT * FROM despachador ORDER BY nombre')->fetchAll();
                                     foreach ($desp as $d) {
-                                        $sel = ($d['id_empleado'] == $registro['id_despachador']) ? 'selected' : '';
-                                        echo "<option value='{$d['id_empleado']}' $sel>{$d['nombre_completo']}</option>";
+                                        $sel = ((int) $d['id_despachador'] === (int) $registro['id_despachador']) ? 'selected' : '';
+                                        echo '<option value="' . (int) $d['id_despachador'] . '" ' . $sel . '>' . htmlspecialchars($d['nombre']) . '</option>';
                                     }
                                     ?>
                                 </select>
@@ -158,10 +158,10 @@ if (isset($_GET['folio'])) {
                                 <label class="form-label"><i class="bi bi-person-vcard"></i> Chofer</label>
                                 <select name="id_chofer" class="form-select" required>
                                     <?php
-                                    $chof = $pdo->query("SELECT * FROM personal WHERE puesto='Chofer' ORDER BY nombre_completo")->fetchAll();
+                                    $chof = $pdo->query('SELECT * FROM chofer ORDER BY nombre')->fetchAll();
                                     foreach ($chof as $c) {
-                                        $sel = ($c['id_empleado'] == $registro['id_chofer']) ? 'selected' : '';
-                                        echo "<option value='{$c['id_empleado']}' $sel>{$c['nombre_completo']}</option>";
+                                        $sel = ((int) $c['id_chofer'] === (int) $registro['id_chofer']) ? 'selected' : '';
+                                        echo '<option value="' . (int) $c['id_chofer'] . '" ' . $sel . '>' . htmlspecialchars($c['nombre']) . '</option>';
                                     }
                                     ?>
                                 </select>
@@ -171,18 +171,18 @@ if (isset($_GET['folio'])) {
                         <h5 class="section-title"> Cantidades</h5>
                         <div class="row mb-4">
                             <div class="col-md-4">
-                                <label class="form-label"><i class="bi bi-box"></i> Cantidad KG</label>
-                                <input type="number" name="cantidad_kg" class="form-control" step="0.01" value="<?php echo $registro['cantidad_kg']; ?>" required>
+                                <label class="form-label"><i class="bi bi-box"></i> Cantidad</label>
+                                <input type="number" name="cantidad" class="form-control" step="0.01" value="<?php echo htmlspecialchars($registro['cantidad']); ?>" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Cantidad Puches</label>
-                                <input type="number" name="cantidad_puches" class="form-control" value="<?php echo $registro['cantidad_puches']; ?>" required>
+                                <input type="number" name="num_puches" class="form-control" value="<?php echo (int) $registro['num_puches']; ?>" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label"><i class="bi bi-truck"></i> Tipo de Unidad</label>
                                 <select name="id_tipo_unidad" id="id_tipo_unidad_edit" class="form-select" required>
                                     <?php
-                                    $tipos = $pdo->query("SELECT * FROM tipos_unidad ORDER BY nombre")->fetchAll();
+                                    $tipos = $pdo->query('SELECT * FROM tipo_unidad ORDER BY nombre')->fetchAll();
                                     foreach ($tipos as $t) {
                                         $sel = ($t['id_tipo'] == $registro['id_tipo_unidad']) ? 'selected' : '';
                                         echo "<option value='{$t['id_tipo']}' $sel>{$t['nombre']}</option>";
@@ -193,14 +193,23 @@ if (isset($_GET['folio'])) {
                         </div>
 
                         <div class="row mb-4">
+                            <div class="col-md-12">
+                                <label class="form-label"><i class="bi bi-chat-left-text"></i> Comentarios</label>
+                                <textarea name="comentarios" class="form-control" rows="2"><?php echo htmlspecialchars((string) ($registro['comentarios'] ?? '')); ?></textarea>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
                             <div class="col-md-4">
                                 <label class="form-label"><i class="bi bi-truck-front"></i> N° de Unidad</label>
                                 <select name="id_unidad" id="id_unidad_edit" class="form-select" required>
                                     <?php
-                                    $unidades = $pdo->query("SELECT * FROM unidades WHERE id_tipo = {$registro['id_tipo_unidad']}")->fetchAll();
+                                    $stmtU = $pdo->prepare('SELECT id_unidad, numero FROM numero_unidad WHERE id_tipo = ? ORDER BY numero');
+                                    $stmtU->execute([(int) $registro['id_tipo_unidad']]);
+                                    $unidades = $stmtU->fetchAll();
                                     foreach ($unidades as $u) {
-                                        $sel = ($u['id_unidad'] == $registro['id_unidad']) ? 'selected' : '';
-                                        echo "<option value='{$u['id_unidad']}' $sel>{$u['numero_unidad']}</option>";
+                                        $sel = ((int) $u['id_unidad'] === (int) $registro['id_unidad']) ? 'selected' : '';
+                                        echo '<option value="' . (int) $u['id_unidad'] . '" ' . $sel . '>' . htmlspecialchars($u['numero']) . '</option>';
                                     }
                                     ?>
                                 </select>
@@ -211,15 +220,15 @@ if (isset($_GET['folio'])) {
                         <div class="row mb-4">
                             <div class="col-md-4">
                                 <label class="form-label"><i class="bi bi-speedometer2"></i>KM Salida</label>
-                                <input type="number" id="km_salida" name="km_salida" class="form-control" step="0.01" value="<?php echo $registro['km_salida']; ?>" required>
+                                <input type="number" id="km_inicio" name="km_inicio" class="form-control" step="0.01" value="<?php echo htmlspecialchars($registro['km_inicio']); ?>" required>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label"><i class="bi bi-speedometer2"></i>KM Entrada</label>
-                                <input type="number" id="km_entrada" name="km_entrada" class="form-control" step="0.01" value="<?php echo $registro['km_entrada']; ?>" required>
+                                <label class="form-label"><i class="bi bi-speedometer2"></i> KM final (menor que inicio)</label>
+                                <input type="number" id="km_final" name="km_final" class="form-control" step="0.01" value="<?php echo htmlspecialchars($registro['km_final']); ?>" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label"><i class="bi bi-speedometer"></i> Total KM</label>
-                                <input type="number" id="total_km" name="total_km" class="form-control readonly-field" value="<?php echo $registro['total_km']; ?>" readonly>
+                                <input type="number" id="total_km" class="form-control readonly-field" value="<?php echo htmlspecialchars($registro['total_km']); ?>" readonly>
                             </div>
                         </div>
 
@@ -239,12 +248,15 @@ if (isset($_GET['folio'])) {
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label"><i class="bi bi-fuel-pump-fill"></i> Total Diesel</label>
-                                <input type="number" id="total_diesel" name="total_diesel" class="form-control readonly-field" value="<?php echo $registro['total_diesel']; ?>" readonly>
+                                <input type="number" id="total_diesel" class="form-control readonly-field" value="<?php
+                                    $td = max(0, ((float) $registro['diesel_inicio'] - (float) $registro['diesel_final']) + (float) $registro['diesel_cargado']);
+echo htmlspecialchars($td);
+?>" readonly>
                             </div>
                         </div>
 
                         <!-- TABLA 1: Colonias Editables -->
-                        <?php if (!empty($colonias)): ?>
+                        <?php if (!empty($colonias_edit)): ?>
                             <h5 class="section-title">Detalle de Colonias</h5>
                             <div class="table-responsive mb-4">
                                 <table class="table table-bordered table-hover table-sm">
@@ -257,19 +269,19 @@ if (isset($_GET['folio'])) {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php foreach ($colonias as $index => $col): ?>
+                                        <?php foreach ($colonias_edit as $index => $col): ?>
                                             <tr>
                                                 <td class="text-center fw-bold"><?php echo $index + 1; ?></td>
-                                                <td><?php echo $col['nombre_colonia']; ?></td>
+                                                <td><?php echo htmlspecialchars($col['nombre_colonia']); ?></td>
                                                 <td class="text-center">
                                                     <input type="number"
-                                                        name="pct_colonia[<?php echo $col['id_colonia']; ?>]"
+                                                        name="pct_colonia[<?php echo (int) $col['slot']; ?>]"
                                                         class="form-control form-control-sm pct-input"
                                                         min="0" max="100" step="0.1"
-                                                        value="<?php echo $col['porcentaje']; ?>"
+                                                        value="<?php echo htmlspecialchars((string) ($col['porcentaje'] ?? '')); ?>"
                                                         placeholder="0-100">
                                                 </td>
-                                                <td class="text-center"><?php echo number_format($col['habitantes']); ?></td>
+                                                <td class="text-center"><?php echo $col['habitantes'] !== null ? number_format((float) $col['habitantes']) : ''; ?></td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -290,11 +302,11 @@ if (isset($_GET['folio'])) {
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="text-center fw-bold" id="tabla2_fecha">-</td>
-                                            <td class="text-center fw-bold" id="tabla2_hora">-</td>
-                                            <td class="text-center fw-bold" id="tabla2_suma">0.0</td>
-                                            <td class="text-center fw-bold" id="tabla2_colonias">0</td>
-                                            <td class="text-center fw-bold" id="tabla2_efectividad">0.0%</td>
+                                            <td class="text-center fw-bold" id="tabla2_fecha" data-from-server="1"><?php echo date('d/m/Y', strtotime($registro['fecha_orden'])); ?></td>
+                                            <td class="text-center fw-bold" id="tabla2_hora" data-from-server="1"><?php echo date('H:i', strtotime($registro['fecha_captura'])); ?></td>
+                                            <td class="text-center fw-bold" id="tabla2_suma"><?php echo htmlspecialchars($registro['suma_pct_atendida']); ?></td>
+                                            <td class="text-center fw-bold" id="tabla2_colonias"><?php echo (int) $registro['num_colonias_ruta']; ?></td>
+                                            <td class="text-center fw-bold" id="tabla2_efectividad"><?php echo htmlspecialchars($registro['pct_efectividad']); ?>%</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -332,6 +344,7 @@ if (isset($_GET['folio'])) {
                 <br> Stephany Chavez
                 <br> Jan Karlo Armendariz
                 <br> Joel Garcia
+                <br> Brandon Velazquez
             </p>
         </div>
     </div>

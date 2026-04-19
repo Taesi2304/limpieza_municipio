@@ -22,23 +22,19 @@ $pdo = getConnection();
 </head>
 
 <body>
-    <nav class="navbar navbar-dark bg-success mb-4">
+    <nav class="navbar navbar-light bg-white border-bottom mb-4 app-navbar">
         <div class="container-fluid">
-            <span class="navbar-brand"> Captura de Orden de Servicio
-            </span>
-            <div>
-                <span class="text-white me-3"><i class="bi bi-person-circle"></i> <?php echo $_SESSION['usuario']; ?></span>
-                <a href="editar.php" class="btn btn-light btn-sm me-2"><i class="bi bi-pencil-square"></i> Editar</a>
-                <a href="inicio.php?logout=1" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
+            <span class="navbar-brand text-dark mb-0">Captura de Orden de Servicio</span>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="text-muted small me-1"><i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['usuario']); ?></span>
+                <a href="editar.php" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pencil-square"></i> Editar</a>
+                <a href="inicio.php?logout=1" class="btn btn-outline-secondary btn-sm"><i class="bi bi-box-arrow-right"></i> Salir</a>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <div class="card shadow">
-            <div class="card-header card-header-success">
-                <h4 class="mb-0"><i class="bi bi-envelope-paper"></i> Rellenar Orden </h4>
-            </div>
+        <div class="card shadow card-form-panel">
             <div class="card-body">
                 <form id="formulario" action="guardar_registro.php" method="POST">
 
@@ -48,7 +44,7 @@ $pdo = getConnection();
                         <div class="col-md-3">
                             <label class="form-label">Folio de Solicitud </label> <br>
                             <div class="folio-badge" id="folio_display">---</div>
-                            <input type="hidden" name="folio" id="folio_hidden">
+                            <input type="hidden" id="folio_hidden">
                         </div>
 
                         <div class="col-md-3">
@@ -76,12 +72,12 @@ $pdo = getConnection();
                     <div class="row mb-4">
                         <div class="col-md-4">
                             <label class="form-label"><i class="bi bi-signpost-2"></i> Ruta</label>
-                            <select name="id_ruta" id="id_ruta" class="form-select" required>
+                            <select name="numero_ruta" id="numero_ruta" class="form-select" required>
                                 <option value="">Seleccionar</option>
                                 <?php
-                                $rutas = $pdo->query("SELECT * FROM rutas ORDER BY id_ruta")->fetchAll();
-                                foreach ($rutas as $r) {
-                                    echo "<option value='{$r['id_ruta']}'>{$r['nombre_ruta']}</option>";
+                                $nums = $pdo->query('SELECT DISTINCT id_ruta FROM rutas ORDER BY id_ruta')->fetchAll(PDO::FETCH_COLUMN);
+                                foreach ($nums as $nr) {
+                                    echo '<option value="' . (int) $nr . '">Ruta ' . (int) $nr . '</option>';
                                 }
                                 ?>
                             </select>
@@ -91,9 +87,9 @@ $pdo = getConnection();
                             <select name="id_despachador" class="form-select" required>
                                 <option value="">Seleccionar</option>
                                 <?php
-                                $desp = $pdo->query("SELECT * FROM personal WHERE puesto='Despachador' ORDER BY nombre_completo")->fetchAll();
+                                $desp = $pdo->query('SELECT * FROM despachador ORDER BY nombre')->fetchAll();
                                 foreach ($desp as $d) {
-                                    echo "<option value='{$d['id_empleado']}'>{$d['nombre_completo']}</option>";
+                                    echo '<option value="' . (int) $d['id_despachador'] . '">' . htmlspecialchars($d['nombre']) . '</option>';
                                 }
                                 ?>
                             </select>
@@ -103,9 +99,9 @@ $pdo = getConnection();
                             <select name="id_chofer" class="form-select" required>
                                 <option value="">Seleccionar</option>
                                 <?php
-                                $chof = $pdo->query("SELECT * FROM personal WHERE puesto='Chofer' ORDER BY nombre_completo")->fetchAll();
+                                $chof = $pdo->query('SELECT * FROM chofer ORDER BY nombre')->fetchAll();
                                 foreach ($chof as $c) {
-                                    echo "<option value='{$c['id_empleado']}'>{$c['nombre_completo']}</option>";
+                                    echo '<option value="' . (int) $c['id_chofer'] . '">' . htmlspecialchars($c['nombre']) . '</option>';
                                 }
                                 ?>
                             </select>
@@ -116,19 +112,19 @@ $pdo = getConnection();
                     <h5 class="section-title">Cantidades</h5>
                     <div class="row mb-4">
                         <div class="col-md-4">
-                            <label class="form-label"><i class="bi bi-box"></i> Cantidad KG</label>
-                            <input type="number" name="cantidad_kg" class="form-control" step="0.01" min="0" placeholder="0.00" required>
+                            <label class="form-label"><i class="bi bi-box"></i> Cantidad</label>
+                            <input type="number" name="cantidad" class="form-control" step="0.01" min="0" placeholder="0.00" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Cantidad Puches</label>
-                            <input type="number" name="cantidad_puches" class="form-control" min="0" placeholder="0" required>
+                            <label class="form-label"><i class="bi bi-truck"></i> Cantidad Puches</label>
+                            <input type="number" name="num_puches" class="form-control" min="0" placeholder="0" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label"><i class="bi bi-truck"></i> Tipo de Unidad</label>
                             <select name="id_tipo_unidad" id="id_tipo_unidad" class="form-select" required>
                                 <option value="">Seleccionar</option>
                                 <?php
-                                $tipos = $pdo->query("SELECT * FROM tipos_unidad ORDER BY nombre")->fetchAll();
+                                $tipos = $pdo->query('SELECT * FROM tipo_unidad ORDER BY nombre')->fetchAll();
                                 foreach ($tipos as $t) {
                                     echo "<option value='{$t['id_tipo']}'>{$t['nombre']}</option>";
                                 }
@@ -144,22 +140,26 @@ $pdo = getConnection();
                                 <option value="">Primero Seleccionar Tipo de Unidad</option>
                             </select>
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label"><i class="bi bi-chat-left-text"></i> Comentarios</label>
+                            <textarea name="comentarios" class="form-control" rows="2" placeholder="Opcional"></textarea>
+                        </div>
                     </div>
 
                     <!-- Kilómetros -->
                     <h5 class="section-title">Kilómetros</h5>
                     <div class="row mb-4">
                         <div class="col-md-4">
-                            <label class="form-label"><i class="bi bi-speedometer2"></i> KM Salida</label>
-                            <input type="number" id="km_salida" name="km_salida" class="form-control" step="0.01" min="0" placeholder="0.00" required>
+                            <label class="form-label"><i class="bi bi-speedometer2"></i> KM inicio</label>
+                            <input type="number" id="km_inicio" name="km_inicio" class="form-control" step="0.01" min="0" placeholder="0.00" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label"><i class="bi bi-speedometer2"></i> KM Entrada</label>
-                            <input type="number" id="km_entrada" name="km_entrada" class="form-control" step="0.01" min="0" placeholder="0.00" required>
+                            <label class="form-label"><i class="bi bi-speedometer2"></i> KM final</label>
+                            <input type="number" id="km_final" name="km_final" class="form-control" step="0.01" min="0" placeholder="0.00" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label"><i class="bi bi-speedometer"></i> Total KM </label>
-                            <input type="number" id="total_km" name="total_km" class="form-control readonly-field" readonly>
+                            <input type="number" id="total_km" class="form-control readonly-field" readonly>
                         </div>
                     </div>
 
@@ -179,8 +179,8 @@ $pdo = getConnection();
                             <input type="number" id="diesel_cargado" name="diesel_cargado" class="form-control" step="0.01" min="0" value="0" placeholder="0.00">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label"><i class="bi bi-fuel-pump-fill"></i> Total Diesel </label>
-                            <input type="number" id="total_diesel" name="total_diesel" class="form-control readonly-field" readonly>
+                            <label class="form-label"><i class="bi bi-fuel-pump-fill"></i> Total Diesel</label>
+                            <input type="number" id="total_diesel" class="form-control readonly-field" readonly>
                         </div>
                     </div>
 
@@ -229,7 +229,7 @@ $pdo = getConnection();
 
                     <div class="d-grid gap-2 mt-4">
                         <button type="submit" id="btn_guardar" class="btn btn-success-custom btn-lg" disabled>
-                            <i class="bi bi-send-check-fill"></i> Guardar
+                            Guardar
                         </button>
                     </div>
                 </form>
@@ -277,6 +277,7 @@ $pdo = getConnection();
                 <br> Stephany Chavez
                 <br> Jan Karlo Armendariz
                 <br> Joel Garcia
+                <br> Brandon Velazquez
             </p>
         </div>
     </div>
