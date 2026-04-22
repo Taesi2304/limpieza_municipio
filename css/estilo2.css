@@ -22,7 +22,7 @@ body {
   flex-direction: column;
   min-height: 100vh;
   font-family: 'Barlow', sans-serif;
-  background: #ffffff;
+  background: var(--guindo-claro);
   color: #212529;
 }
 
@@ -55,6 +55,7 @@ nav.app-navbar .navbar-brand {
 
 /* ── Contenedor principal ── */
 .container {
+
   padding-top: 28px;
   padding-bottom: 36px;
 }
@@ -69,6 +70,7 @@ nav.app-navbar .navbar-brand {
   background: #fff;
 }
 .card-body {
+  border-radius: 10px;
   padding: 28px 32px;
   background-color: #ffffff;
 }
@@ -256,7 +258,7 @@ thead.table-primary tr th {
 /* ── Footer ── */
 footer.footer {
     position: relative;
-    background-color: #f8f9fa;
+    background-color: rgba(218, 165, 32, 0.828);
     color: #495057;
     border-top: 1px solid #e9ecef;
     /* padding: 10px 0;
