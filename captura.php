@@ -4,7 +4,7 @@ if (!isset($_SESSION['usuario'])) {
     header('Location: inicio.php');
     exit;
 }
-require_once 'includes/db.php';
+require_once 'includes/db.php'; //establece la conexion de bd.php 
 $pdo = getConnection();
 ?>
 

@@ -22,10 +22,10 @@ try {
 
     $km_inicio = (float) ($_POST['km_inicio'] ?? 0);
     $km_final = (float) ($_POST['km_final'] ?? 0);
-    if ($km_final >= $km_inicio) {
-        throw new Exception('Los km al final deben ser menores que los km al inicio (odómetro al terminar la ruta).');
+    if ($km_final < $km_inicio) {
+        throw new Exception('Los km al final deben ser mayores o iguales que los km al inicio.');
     }
-    $total_km = max(0, $km_inicio - $km_final);
+    $total_km = max(0, $km_final - $km_inicio);
 
     $comentarios = trim((string) ($_POST['comentarios'] ?? ''));
     $comentarios = $comentarios === '' ? null : $comentarios;
