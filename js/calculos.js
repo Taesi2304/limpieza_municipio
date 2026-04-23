@@ -26,12 +26,12 @@ function actualizarTabla2() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // KM recorridos = km_inicio - km_final (odómetro al inicio y al terminar)
+    // KM recorridos = km_final - km_inicio (odómetro al inicio y al terminar)
     function calcularKM() {
         const inicio = parseFloat(document.getElementById('km_inicio')?.value) || 0;
         const final = parseFloat(document.getElementById('km_final')?.value) || 0;
         const total = document.getElementById('total_km');
-        if (total) total.value = Math.max(0, inicio - final).toFixed(2);
+        if (total) total.value = Math.max(0, final - inicio).toFixed(2);
     }
 
     document.getElementById('km_inicio')?.addEventListener('input', calcularKM);
